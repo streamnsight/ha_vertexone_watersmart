@@ -1,0 +1,28 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "The service is already configured",
+            "reauth_successful": "Re-authentication was successful"
+        },
+        "error": {
+            "cannot_connect": "Failed to connect to the service.",
+            "invalid_auth": "Invalid authentication"
+        },
+        "step": {
+            "reauth_confirm": {
+                "data": {
+                    "password": "Password",
+                    "username": "Username"
+                },
+                "title": "Re-authenticate Integration"
+            },
+            "user": {
+                "data": {
+                    "district": "Water District Provider",
+                    "password": "Password",
+                    "username": "Username"
+                }
+            }
+        }
+    }
+}

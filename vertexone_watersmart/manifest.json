@@ -1,0 +1,13 @@
+{
+    "domain": "vertexone_watersmart",
+    "name": "VertexOne WaterSmart",
+    "after_dependencies": ["recorder"],
+    "codeowners": [],
+    "integration_type": "device",
+    "config_flow": true,
+    "dependencies": ["recorder"],
+    "documentation": "https://github.com/home-assistant/example-custom-config/tree/master/custom_components/example_sensor/",
+    "iot_class": "cloud_polling",
+    "requirements": ["vertexone-watersmart==0.1.4"],
+    "version": "0.1.0"
+  }
