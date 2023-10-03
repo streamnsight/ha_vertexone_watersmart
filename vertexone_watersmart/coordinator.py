@@ -317,9 +317,9 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
                         stats[entity.key],
                     )
 
-        _LOGGER.debug(
-            f"Updated SCWS with {len(stats[entity.key])} entries in {datetime.now() - t0}."
-        )
+            _LOGGER.debug(
+                f"Updated {entity.key} with {len(stats[entity.key])} entries in {datetime.now() - t0}."
+            )
         _LOGGER.debug(f"Next poll at {datetime.now() + self.update_interval}.")
 
         return {self.account: {}}
