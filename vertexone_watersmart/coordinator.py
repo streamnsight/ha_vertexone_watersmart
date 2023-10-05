@@ -39,6 +39,7 @@ from .utils import (
     save_states,
     get_last_known_state,
     get_last_known_statistic,
+    delete_invalid_states
 )
 
 
@@ -210,6 +211,8 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
                 last_stats[entity.key] = await get_last_known_statistic(
                     self.hass, f"sensor.{entity.key}"
                 )
+
+                await delete_invalid_states(self.hass, f"sensor.{entity.key}")
 
             dataset = datapoints[entity_type]
             last_values = []

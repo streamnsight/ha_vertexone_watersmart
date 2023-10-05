@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from sqlalchemy import or_
 
 from homeassistant.components import recorder
 from homeassistant.components.recorder.db_schema import (
@@ -13,6 +14,8 @@ from homeassistant.components.recorder.statistics import (
     get_last_statistics,
 )
 
+from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
+
 
 def _get_or_create(session, entity_id):
     instance = session.query(StatesMeta).filter_by(entity_id=entity_id).first()
@@ -23,6 +26,16 @@ def _get_or_create(session, entity_id):
     return instance.metadata_id
 
 
+async def delete_invalid_states(hass, id):
+    r = recorder.get_instance(hass)
+    with recorder.util.session_scope(session=r.get_session()) as session:
+        await r.async_add_executor_job(_delete_invalid_states, session, id)
+    
+def _delete_invalid_states(session, entity_id):
+    to_delete = session.query(States).where(or_(States.state==STATE_UNKNOWN,States.state==STATE_UNAVAILABLE))
+    to_delete.delete()
+    session.commit()
+ 
 async def get_or_create(hass, id):
     r = recorder.get_instance(hass)
     with recorder.util.session_scope(session=r.get_session()) as session:
