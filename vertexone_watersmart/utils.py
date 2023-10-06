@@ -28,10 +28,19 @@ def _get_or_create(session, entity_id):
     return instance.metadata_id
 
 
+async def get_or_create(hass, id):
+    r = recorder.get_instance(hass)
+    session = r.get_session()
+    # with recorder.util.session_scope(session=r.get_session()) as session:
+    instance = await r.async_add_executor_job(_get_or_create, session, id)
+    return instance
+
+
 async def delete_invalid_states(hass, id):
     r = recorder.get_instance(hass)
-    with recorder.util.session_scope(session=r.get_session()) as session:
-        await r.async_add_executor_job(_delete_invalid_states, session, id)
+    session = r.get_session()
+    # with recorder.util.session_scope(session=r.get_session()) as session:
+    await r.async_add_executor_job(_delete_invalid_states, session, id)
 
 
 def _delete_invalid_states(session, id):
@@ -49,13 +58,6 @@ def _delete_invalid_states(session, id):
         session.expunge_all()
         session.commit()
         pass
-
-
-async def get_or_create(hass, id):
-    r = recorder.get_instance(hass)
-    with recorder.util.session_scope(session=r.get_session()) as session:
-        instance = await r.async_add_executor_job(_get_or_create, session, id)
-    return instance
 
 
 def _save_states(session, states):
