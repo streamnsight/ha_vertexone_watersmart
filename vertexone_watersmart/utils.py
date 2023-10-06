@@ -30,12 +30,22 @@ async def delete_invalid_states(hass, id):
     r = recorder.get_instance(hass)
     with recorder.util.session_scope(session=r.get_session()) as session:
         await r.async_add_executor_job(_delete_invalid_states, session, id)
-    
+
+
 def _delete_invalid_states(session, entity_id):
-    to_delete = session.query(States).where(or_(States.state==STATE_UNKNOWN,States.state==STATE_UNAVAILABLE))
-    to_delete.delete()
-    session.commit()
- 
+    to_delete = session.query(States).where(
+        or_(States.state == STATE_UNKNOWN, States.state == STATE_UNAVAILABLE)
+    )
+    try:
+        to_delete.delete()
+        session.commit()
+    except Exception:
+        session.flush()
+        session.expunge_all()
+        session.commit()
+        pass
+
+
 async def get_or_create(hass, id):
     r = recorder.get_instance(hass)
     with recorder.util.session_scope(session=r.get_session()) as session:
@@ -44,7 +54,8 @@ async def get_or_create(hass, id):
 
 
 def _save_states(session, states):
-    session.add_all(states)
+    session.bulk_save_objects(states)
+    # session.add_all(states)
     session.commit()
 
 

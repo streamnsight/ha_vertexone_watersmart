@@ -39,7 +39,7 @@ from .utils import (
     save_states,
     get_last_known_state,
     get_last_known_statistic,
-    delete_invalid_states
+    delete_invalid_states,
 )
 
 
@@ -168,7 +168,7 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
         stats_meta = {}
         last_states = {}
         last_stats = {}
-        sensor_period_type = [s.period for s in ENTITIES]
+        sensor_period_type = list(set([s.period for s in ENTITIES]))
 
         for entity_type in sensor_period_type:
             retry = 3
@@ -190,7 +190,9 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
             retry = 3
             while retry >= 0:
                 try:
+                    t1 = datetime.now()
                     datapoints[entity_type] = await api.fetch()
+                    _LOGGER.debug("fetch data took %s", datetime.now() - t1)
                     break
                 except Exception as e:
                     _LOGGER.debug(e)
@@ -201,24 +203,46 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
             entities = [e for e in ENTITIES if e.period == entity_type]
 
             for entity in entities:
+                t1 = datetime.now()
                 state_meta_ids[entity.key] = await get_or_create(
                     self.hass, id=f"sensor.{entity.key}"
                 )
+                _LOGGER.debug(
+                    "get %s metadata took %s",
+                    f"sensor.{entity.key}",
+                    datetime.now() - t1,
+                )
+                t1 = datetime.now()
                 last_states[entity.key] = await get_last_known_state(
                     self.hass, f"sensor.{entity.key}"
                 )
+                _LOGGER.debug(
+                    "get %s last state took %s",
+                    f"sensor.{entity.key}",
+                    datetime.now() - t1,
+                )
 
+                t1 = datetime.now()
                 last_stats[entity.key] = await get_last_known_statistic(
                     self.hass, f"sensor.{entity.key}"
                 )
+                _LOGGER.debug(
+                    "get %s last stat took %s",
+                    f"sensor.{entity.key}",
+                    datetime.now() - t1,
+                )
 
+                t1 = datetime.now()
                 await delete_invalid_states(self.hass, f"sensor.{entity.key}")
+                _LOGGER.debug("delete invalid states took %s", datetime.now() - t1)
 
             dataset = datapoints[entity_type]
             last_values = []
 
             # record historical sensor states, to be visible as a sensor history, not only statistics.
             last_idx = 1
+
+            t1 = datetime.now()
             for i, d in enumerate(dataset):
                 start_time = datetime.fromtimestamp(d["ts"], tz=timezone.utc)
                 end_time = start_time + timedelta(hours=1)
@@ -255,11 +279,21 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
                         )
                     )
 
+            _LOGGER.debug("parsing data to states took %s", datetime.now() - t1)
+
+            t1 = datetime.now()
             # save states and build statistics.
             for entity in entities:
                 if len(states[entity.key]) > 0:
+                    t1 = datetime.now()
                     await save_states(self.hass, states[entity.key])
+                    _LOGGER.debug(
+                        "saving %s state took %s",
+                        f"sensor.{entity.key}",
+                        datetime.now() - t1,
+                    )
 
+                t1 = datetime.now()
                 if entity.key not in stats_meta:
                     stats_meta[entity.key] = {}
                 if entity.key not in stats:
@@ -312,13 +346,24 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
                             last_reset=dt,
                         )
                     )
+                _LOGGER.debug(
+                    "parsing %s stats took %s",
+                    f"sensor.{entity.key}",
+                    datetime.now() - t1,
+                )
 
+                t1 = datetime.now()
                 if len(stats[entity.key]) > 0:
                     async_import_statistics(
                         self.hass,
                         stats_meta[entity.key],
                         stats[entity.key],
                     )
+                _LOGGER.debug(
+                    "storing %s stats took %s",
+                    f"sensor.{entity.key}",
+                    datetime.now() - t1,
+                )
 
             _LOGGER.debug(
                 f"Updated {entity.key} with {len(stats[entity.key])} entries in {datetime.now() - t0}."
