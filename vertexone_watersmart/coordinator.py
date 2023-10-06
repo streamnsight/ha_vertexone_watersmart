@@ -248,7 +248,13 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
                 dt_ = dt_util.as_local(datetime.fromtimestamp(d["ts"]))
                 ts = dt_.timestamp()
                 if i == 0:
-                    _LOGGER.debug("orig_dt: %s, dt: %s, ts: %s", d["ts"], dt_, ts)
+                    _LOGGER.debug(
+                        "orig_dt: %s, dt: %s, ts: %s, tz: %s",
+                        d["ts"],
+                        dt_,
+                        ts,
+                        dt_util.DEFAULT_TIME_ZONE,
+                    )
 
                 for entity in entities:
                     # skip records that have already been seen.
