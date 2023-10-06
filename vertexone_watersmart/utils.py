@@ -63,8 +63,14 @@ def _save_states(session, states):
 
 async def save_states(hass, states):
     r = recorder.get_instance(hass)
+    chunk_size = 50
+    offset = 0
     with recorder.util.session_scope(session=r.get_session()) as session:
-        res = await r.async_add_executor_job(_save_states, session, states)
+        while offset < len(states):
+            res = await r.async_add_executor_job(
+                _save_states, session, states[offset : offset + chunk_size]
+            )
+            offset += chunk_size
     return res
 
 
