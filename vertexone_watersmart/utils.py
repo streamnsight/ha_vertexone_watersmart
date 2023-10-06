@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 
 from homeassistant.components import recorder
 from homeassistant.components.recorder.db_schema import (
@@ -34,9 +34,12 @@ async def delete_invalid_states(hass, id):
         await r.async_add_executor_job(_delete_invalid_states, session, id)
 
 
-def _delete_invalid_states(session, entity_id):
+def _delete_invalid_states(session, id):
     to_delete = session.query(States).where(
-        or_(States.state == STATE_UNKNOWN, States.state == STATE_UNAVAILABLE)
+        and_(
+            or_(States.state == STATE_UNKNOWN, States.state == STATE_UNAVAILABLE),
+            States.metadata_id == id,
+        )
     )
     try:
         to_delete.delete()
@@ -63,14 +66,8 @@ def _save_states(session, states):
 
 async def save_states(hass, states):
     r = recorder.get_instance(hass)
-    chunk_size = 50
-    offset = 0
     with recorder.util.session_scope(session=r.get_session()) as session:
-        while offset < len(states):
-            res = await r.async_add_executor_job(
-                _save_states, session, states[offset : offset + chunk_size]
-            )
-            offset += chunk_size
+        res = await r.async_add_executor_job(_save_states, session, states)
     return res
 
 

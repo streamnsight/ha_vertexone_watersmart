@@ -161,7 +161,8 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
         t0 = datetime.now()
         datapoints = {}
 
-        states = {}
+        states = []
+        old_states = {}
         state_meta_ids = {}
         stats = {}
         stats_meta_ids = {}
@@ -233,7 +234,7 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
                 )
 
                 t1 = datetime.now()
-                await delete_invalid_states(self.hass, f"sensor.{entity.key}")
+                await delete_invalid_states(self.hass, state_meta_ids[entity.key])
                 _LOGGER.debug("delete invalid states took %s", datetime.now() - t1)
 
             dataset = datapoints[entity_type]
@@ -248,8 +249,8 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
 
                 for entity in entities:
                     # skip records that have already been seen.
-                    if entity.key not in states:
-                        states[entity.key] = []
+                    if entity.key not in old_states:
+                        old_states[entity.key] = last_states[entity.key]
 
                     if (
                         last_states[entity.key]["last_changed_ts"] is not None
@@ -266,32 +267,22 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
                     else:
                         state = d[entity.api_value_key]
 
-                    states[entity.key].append(
-                        States(
-                            state=state,
-                            metadata_id=state_meta_ids[entity.key],
-                            last_changed_ts=ts,
-                            last_updated_ts=ts,
-                            old_state=states[entity.key][i - last_idx]
-                            if i >= last_idx
-                            else None,
-                        )
+                    new_state = States(
+                        state=state,
+                        metadata_id=state_meta_ids[entity.key],
+                        last_changed_ts=ts,
+                        last_updated_ts=ts,
+                        old_state=old_states[entity.key] if i >= last_idx else None,
                     )
+
+                    states.append(new_state)
+                    old_states[entity.key] = new_state
 
             _LOGGER.debug("parsing data to states took %s", datetime.now() - t1)
 
             t1 = datetime.now()
             # save states and build statistics.
             for entity in entities:
-                if len(states[entity.key]) > 0:
-                    t1 = datetime.now()
-                    await save_states(self.hass, states[entity.key])
-                    _LOGGER.debug(
-                        "saving %s state took %s",
-                        f"sensor.{entity.key}",
-                        datetime.now() - t1,
-                    )
-
                 t1 = datetime.now()
                 if entity.key not in stats_meta:
                     stats_meta[entity.key] = {}
@@ -361,6 +352,13 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
                 _LOGGER.debug(
                     "storing %s stats took %s",
                     f"sensor.{entity.key}",
+                    datetime.now() - t1,
+                )
+            if len(states) > 0:
+                t1 = datetime.now()
+                await save_states(self.hass, states)
+                _LOGGER.debug(
+                    "saving state took %s",
                     datetime.now() - t1,
                 )
 
