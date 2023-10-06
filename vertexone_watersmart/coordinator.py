@@ -41,7 +41,7 @@ from .utils import (
     get_last_known_statistic,
     delete_invalid_states,
 )
-
+from homeassistant.util import dt as dt_util
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -244,8 +244,7 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
 
             t1 = datetime.now()
             for i, d in enumerate(dataset):
-                start_time = datetime.fromtimestamp(d["ts"], tz=timezone.utc)
-                end_time = start_time + timedelta(hours=1)
+                ts = dt_util.as_local(datetime.fromtimestamp(d["ts"])).timestamp()
 
                 for entity in entities:
                     # skip records that have already been seen.
@@ -254,7 +253,7 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
 
                     if (
                         last_states[entity.key]["last_changed_ts"] is not None
-                        and d["ts"] <= last_states[entity.key]["last_changed_ts"]
+                        and ts <= last_states[entity.key]["last_changed_ts"]
                     ):
                         last_idx += 1
                         continue
@@ -271,8 +270,8 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
                         States(
                             state=state,
                             metadata_id=state_meta_ids[entity.key],
-                            last_changed_ts=d["ts"],
-                            last_updated_ts=d["ts"],
+                            last_changed_ts=ts,
+                            last_updated_ts=ts,
                             old_state=states[entity.key][i - last_idx]
                             if i >= last_idx
                             else None,
@@ -366,7 +365,7 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
                 )
 
             _LOGGER.debug(
-                f"Updated {entity.key} with {len(stats[entity.key])} entries in {datetime.now() - t0}."
+                f"Updated {entity_type} with {len(stats[entity.key])} entries in {datetime.now() - t0}."
             )
         _LOGGER.debug(f"Next poll at {datetime.now() + self.update_interval}.")
 

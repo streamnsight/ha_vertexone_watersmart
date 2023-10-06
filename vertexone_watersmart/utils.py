@@ -16,6 +16,8 @@ from homeassistant.components.recorder.statistics import (
 
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 
+from homeassistant.util import dt as dt_util
+
 
 def _get_or_create(session, entity_id):
     instance = session.query(StatesMeta).filter_by(entity_id=entity_id).first()
@@ -124,29 +126,29 @@ class TimeBlocs:
         self._fn = fn.get(stat_type)
 
     def yearly(self, state):
-        return datetime.fromtimestamp(state["ts"], tz=timezone.utc).replace(
+        return dt_util.as_local(datetime.fromtimestamp(state["ts"])).replace(
             month=1, day=1, hour=0, minute=0, second=0, microsecond=0
         )
 
     def monthly(self, state):
-        return datetime.fromtimestamp(state["ts"], tz=timezone.utc).replace(
+        return dt_util.as_local(datetime.fromtimestamp(state["ts"])).replace(
             day=1, hour=0, minute=0, second=0, microsecond=0
         )
 
     def weekly(self, state):
-        dttt = datetime.fromtimestamp(state["ts"], tz=timezone.utc).timetuple()
+        dttt = dt_util.as_local(datetime.fromtimestamp(state["ts"])).timetuple()
 
-        return datetime.fromtimestamp(state["ts"], tz=timezone.utc).replace(
+        return dt_util.as_local(datetime.fromtimestamp(state["ts"])).replace(
             hour=0, minute=0, second=0, microsecond=0
         ) - timedelta(days=dttt.tm_wday)
 
     def daily(self, state):
-        return datetime.fromtimestamp(state["ts"], tz=timezone.utc).replace(
+        return dt_util.as_local(datetime.fromtimestamp(state["ts"])).replace(
             hour=0, minute=0, second=0, microsecond=0
         )
 
     def hourly(self, state):
-        return datetime.fromtimestamp(state["ts"], tz=timezone.utc).replace(
+        return dt_util.as_local(datetime.fromtimestamp(state["ts"])).replace(
             minute=0, second=0, microsecond=0
         )
 
