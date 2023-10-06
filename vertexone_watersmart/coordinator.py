@@ -245,13 +245,31 @@ class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
 
             t1 = datetime.now()
             for i, d in enumerate(dataset):
-                dt_ = dt_util.as_local(datetime.fromtimestamp(d["ts"]))
-                ts = dt_.timestamp()
+                offset = datetime.fromtimestamp(
+                    d["ts"], tz=dt_util.DEFAULT_TIME_ZONE
+                ) - datetime.fromtimestamp(d["ts"], tz=timezone.utc)
+                dt1 = datetime.fromtimestamp(d["ts"], tz=timezone.utc)
+                # + offset
+                dt1 = datetime.fromtimestamp(d["ts"], tz=timezone.utc).replace(
+                    tzinfo=None
+                )
+                dt2 = dt_util.as_local(dt1)
+                # ts needs to be corrected as it is a non-standard unix timestamp. It includes a timezone offset
+                # so that the UTC timestamp is actually the time in the local timezone.
+                # We load it as a UTC timestamp so it is not changed, then strip the timezone info
+                # and transform it to a localized datetime.
+                # to get a real UTC timestamp.
+                ts = dt_util.as_local(
+                    datetime.fromtimestamp(d["ts"], tz=timezone.utc).replace(
+                        tzinfo=None
+                    )
+                ).timestamp()
                 if i == 0:
                     _LOGGER.debug(
-                        "orig_dt: %s, dt: %s, ts: %s, tz: %s",
+                        "orig_ts: %s, fromts: %s, localdt: %s, ts: %s, tz: %s",
                         d["ts"],
-                        dt_,
+                        dt1,
+                        dt2,
                         ts,
                         dt_util.DEFAULT_TIME_ZONE,
                     )
