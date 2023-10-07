@@ -6,7 +6,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
-from .coordinator import SCWSCoordinator
+from .coordinator import V1WSCoordinator
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
@@ -14,7 +14,7 @@ PLATFORMS: list[Platform] = [Platform.SENSOR]
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up from a config entry."""
 
-    coordinator = SCWSCoordinator(hass, entry.data)
+    coordinator = V1WSCoordinator(hass, entry.data)
     await coordinator.async_config_entry_first_refresh()
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 

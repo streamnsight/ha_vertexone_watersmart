@@ -18,7 +18,7 @@ from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, NAME
-from .coordinator import SCWSCoordinator, ENTITIES, SCWSEntityDescription
+from .coordinator import V1WSCoordinator, ENTITIES, V1WSEntityDescription
 
 from enum import StrEnum
 
@@ -31,8 +31,8 @@ async def async_setup_entry(
     """Set up the sensors."""
 
     _LOGGER.debug(f"entry: {entry}")
-    coordinator: SCWSCoordinator = hass.data[DOMAIN][entry.entry_id]
-    entities: list[SCWSSensor] = []
+    coordinator: V1WSCoordinator = hass.data[DOMAIN][entry.entry_id]
+    entities: list[V1WSSensor] = []
     devices = coordinator.data.values()
     _LOGGER.debug(devices)
 
@@ -48,7 +48,7 @@ async def async_setup_entry(
 
         for entity in ENTITIES:
             entities.append(
-                SCWSSensor(
+                V1WSSensor(
                     coordinator,
                     entity,
                     device,
@@ -59,15 +59,15 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class SCWSSensor(CoordinatorEntity[SCWSCoordinator], SensorEntity):
+class V1WSSensor(CoordinatorEntity[V1WSCoordinator], SensorEntity):
     """Representation of a sensor."""
 
-    entity_description: SCWSEntityDescription
+    entity_description: V1WSEntityDescription
 
     def __init__(
         self,
-        coordinator: SCWSCoordinator,
-        description: SCWSEntityDescription,
+        coordinator: V1WSCoordinator,
+        description: V1WSEntityDescription,
         device: DeviceInfo,
         device_id: str,
     ) -> None:

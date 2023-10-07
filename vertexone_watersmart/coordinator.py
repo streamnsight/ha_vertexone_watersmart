@@ -47,7 +47,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
-class SCWSEntityDescriptionMixin:
+class V1WSEntityDescriptionMixin:
     """Mixin values for required keys."""
 
     api_value_key: str
@@ -58,12 +58,12 @@ class SCWSEntityDescriptionMixin:
 
 
 @dataclass
-class SCWSEntityDescription(SensorEntityDescription, SCWSEntityDescriptionMixin):
+class V1WSEntityDescription(SensorEntityDescription, V1WSEntityDescriptionMixin):
     """Class describing sensors entities."""
 
 
-ENTITIES: list[SCWSEntityDescription] = [
-    SCWSEntityDescription(
+ENTITIES: list[V1WSEntityDescription] = [
+    V1WSEntityDescription(
         key="hourly_water_consumption",
         name="Hourly Water Consumption",
         device_class=SensorDeviceClass.WATER,
@@ -73,7 +73,7 @@ ENTITIES: list[SCWSEntityDescription] = [
         period="hourly",
         api_value_key="gallons",
     ),
-    SCWSEntityDescription(
+    V1WSEntityDescription(
         key="hourly_water_leak",
         name="Hourly Water Leak",
         device_class=SensorDeviceClass.WATER,
@@ -83,7 +83,7 @@ ENTITIES: list[SCWSEntityDescription] = [
         period="hourly",
         api_value_key="leak_gallons",
     ),
-    SCWSEntityDescription(
+    V1WSEntityDescription(
         key="hourly_water_leak_computed",
         name="Hourly Water Leak (Computed)",
         device_class=SensorDeviceClass.WATER,
@@ -93,7 +93,7 @@ ENTITIES: list[SCWSEntityDescription] = [
         period="hourly",
         api_value_key="gallons",
     ),
-    SCWSEntityDescription(
+    V1WSEntityDescription(
         key="daily_water_consumption",
         name="Daily Water Consumption",
         device_class=SensorDeviceClass.WATER,
@@ -103,7 +103,7 @@ ENTITIES: list[SCWSEntityDescription] = [
         period="daily",
         api_value_key="consumption",
     ),
-    SCWSEntityDescription(
+    V1WSEntityDescription(
         key="daily_temperature",
         name="Daily Temperature",
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -113,7 +113,7 @@ ENTITIES: list[SCWSEntityDescription] = [
         period="daily",
         api_value_key="temperature",
     ),
-    SCWSEntityDescription(
+    V1WSEntityDescription(
         key="daily_precipitation",
         name="Daily Precipitation",
         device_class=SensorDeviceClass.PRECIPITATION,
@@ -126,7 +126,7 @@ ENTITIES: list[SCWSEntityDescription] = [
 ]
 
 
-class SCWSCoordinator(DataUpdateCoordinator[dict[str, object]]):
+class V1WSCoordinator(DataUpdateCoordinator[dict[str, object]]):
     """Handle fetching data, updating sensors and inserting statistics."""
 
     def __init__(
